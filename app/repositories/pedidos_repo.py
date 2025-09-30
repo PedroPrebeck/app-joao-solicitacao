@@ -125,58 +125,16 @@ def build_status_changes(
     return changes
 
 
-def update_statuses(
-    changes: Sequence[StatusChange],
-    *,
-    connector: SupportsHanaConnect,
-    config: HanaConfig | None = None,
-    has_validado_por: bool,
-) -> int:
-    if not changes:
-        return 0
-
-    cfg = config or HanaConfig.from_env()
-    table = PEDIDOS_TABLE.fqn()
-
-    if has_validado_por:
-        sql = f"""
-        UPDATE {table}
-        SET "STATUS" = ?, "VALIDADO_POR" = ?
-        WHERE "TIMESTAMP" = ?
-          AND "NOME" = ?
-          AND "E-MAIL" = ?
-          AND "UTD" = ?
-          AND "BASE" = ?
-          AND "SERVICO" = ?
-          AND "PACOTES" = ?
-        """
-    else:
-        sql = f"""
-        UPDATE {table}
-        SET "STATUS" = ?
-        WHERE "TIMESTAMP" = ?
-          AND "NOME" = ?
-          AND "E-MAIL" = ?
-          AND "UTD" = ?
-          AND "BASE" = ?
-          AND "SERVICO" = ?
-          AND "PACOTES" = ?
-        """
-
-    params = [change.as_tuple() for change in changes]
-
-    conn = None
-    cur = None
     try:
         conn = create_connection(cfg, connector)
         cur = conn.cursor()
         cur.executemany(sql, params)
         conn.commit()
     finally:
-    if cur is not None:
-        cur.close()
-    if conn is not None:
-        conn.close()
+        if cur is not None:
+            cur.close()
+        if conn is not None:
+            conn.close()
 
     return len(params)
 
