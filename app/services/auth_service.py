@@ -23,7 +23,6 @@ def load_auth_config(path: str = ".streamlit/auth_config.yaml") -> Dict[str, Any
         return yaml.load(f, Loader=SafeLoader)
 
 
-@lru_cache(maxsize=1)
 def authenticator_from_config(config: Dict[str, Any]) -> stauth.Authenticate:
     """Create a Streamlit authenticator instance from a config dict."""
 
