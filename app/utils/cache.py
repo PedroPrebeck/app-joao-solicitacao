@@ -59,4 +59,7 @@ def fetch_pedidos_cached() -> pd.DataFrame:
         "VALIDADO_POR",
     ]
     existing_cols = [c for c in desired_cols if c in df.columns]
-    return df[existing_cols].sort_values("TIMESTAMP", ascending=True)
+    result = df[existing_cols].copy()
+    if "TIMESTAMP" in result.columns:
+        result = result.sort_values("TIMESTAMP", ascending=True)
+    return result
