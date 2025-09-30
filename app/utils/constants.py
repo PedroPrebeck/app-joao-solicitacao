@@ -20,6 +20,16 @@ DEFAULT_SERVICOS = [
 
 BASE_GERACAO_OPCOES = ["HOJE", "AMANHÃ", "FIM DE SEMANA"]
 
+ALLOWED_ADMINS = {
+    "joao.almeida@neoenergia.com",
+    "luiz.espozel@neoenergia.com",
+    "pedro.azevedo@neoenergia.com",
+    "carlla.ventura@neoenergia.com",
+    "ccsantos@neoenergia.com",
+    "dsaraujo@neoenergia.com",
+    "madson.melo@neoenergia.com",
+    "jsbrito@neoenergia.com",
+}
 
 class Status:
     """Enumeration for status values stored in the HANA database."""
@@ -58,15 +68,3 @@ class HanaTableInfo:
 
 
 PEDIDOS_TABLE = HanaTableInfo(schema="U618488", table="BASE_PEDIDOS")
-
-
-ALLOWED_ADMINS = {
-    "joao.almeida@neoenergia.com",
-    "luiz.espozel@neoenergia.com",
-    "pedro.azevedo@neoenergia.com",
-    "carlla.ventura@neoenergia.com",
-    "ccsantos@neoenergia.com",
-    "dsaraujo@neoenergia.com",
-    "madson.melo@neoenergia.com",
-    "jsbrito@neoenergia.com",
-}

@@ -79,104 +79,6 @@ def fetch_pedidos(
         df["STATUS"] = Status.EM_ANALISE
     return df
 
-
-def table_has_column(
-    column_name: str,
-    *,
-    connector: SupportsHanaConnect,
-    config: HanaConfig | None = None,
-) -> bool:
-    cfg = config or HanaConfig.from_env()
-    table = PEDIDOS_TABLE.fqn()
-
-    conn = None
-    cur = None
-    try:
-        conn = create_connection(cfg, connector)
-        cur = conn.cursor()
-        cur.execute(f"SELECT * FROM {table} WHERE 1 = 0")
-        cols = [c[0].upper() for c in cur.description]
-        return column_name.upper() in cols
-    except Exception:
-        return False
-    finally:
-        if cur is not None:
-            cur.close()
-        if conn is not None:
-            conn.close()
-
-
-def insert_pedidos(
-    df: pd.DataFrame,
-    *,
-    connector: SupportsHanaConnect,
-    config: HanaConfig | None = None,
-    include_turma: bool,
-) -> int:
-    if df.empty:
-        return 0
-
-    cfg = config or HanaConfig.from_env()
-    table = PEDIDOS_TABLE.fqn()
-
-    if include_turma:
-        sql = f"""
-        INSERT INTO {table}
-        ("TIMESTAMP","NOME","E-MAIL","CADEIA","UTD","BASE","TURMA","ZONA","SERVICO","PACOTES","NOTAS","JUSTIFICATIVA","COMENTARIOS")
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
-        """
-    else:
-        sql = f"""
-        INSERT INTO {table}
-        ("TIMESTAMP","NOME","E-MAIL","CADEIA","UTD","BASE","ZONA","SERVICO","PACOTES","NOTAS","JUSTIFICATIVA","COMENTARIOS")
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
-        """
-
-    params: List[tuple] = []
-    for _, row in df.iterrows():
-        base_values = (
-            row.get("TIMESTAMP"),
-            row.get("NOME"),
-            row.get("E-MAIL"),
-            row.get("CADEIA"),
-            row.get("UTD"),
-            row.get("BASE"),
-        )
-        zona = row.get("ZONA")
-        servico = (row.get("SERVICO_CLEAN") or "")
-        pacotes_raw = row.get("PACOTES", 0)
-        try:
-            pacotes = int(float(pacotes_raw))
-        except (TypeError, ValueError):
-            pacotes = 0
-        notas = None
-        justificativa_val = row.get("JUSTIFICATIVA")
-        comentario_val = row.get("COMENTARIO")
-        justificativa = (str(justificativa_val).strip() or None) if pd.notna(justificativa_val) else None
-        comentario = (str(comentario_val).strip() or None) if pd.notna(comentario_val) else None
-
-        if include_turma:
-            turma = row.get("TURMA")
-            params.append((*base_values, turma, zona, servico, pacotes, notas, justificativa, comentario))
-        else:
-            params.append((*base_values, zona, servico, pacotes, notas, justificativa, comentario))
-
-    conn = None
-    cur = None
-    try:
-        conn = create_connection(cfg, connector)
-        cur = conn.cursor()
-        cur.executemany(sql, params)
-        conn.commit()
-    finally:
-        if cur is not None:
-            cur.close()
-        if conn is not None:
-            conn.close()
-
-    return len(params)
-
-
 def build_status_changes(
     df: pd.DataFrame,
     pending_labels: dict[str, str],
@@ -221,49 +123,6 @@ def build_status_changes(
 
     return changes
 
-
-def update_statuses(
-    changes: Sequence[StatusChange],
-    *,
-    connector: SupportsHanaConnect,
-    config: HanaConfig | None = None,
-    has_validado_por: bool,
-) -> int:
-    if not changes:
-        return 0
-
-    cfg = config or HanaConfig.from_env()
-    table = PEDIDOS_TABLE.fqn()
-
-    if has_validado_por:
-        sql = f"""
-        UPDATE {table}
-        SET "STATUS" = ?, "VALIDADO_POR" = ?
-        WHERE "TIMESTAMP" = ?
-          AND "NOME" = ?
-          AND "E-MAIL" = ?
-          AND "UTD" = ?
-          AND "BASE" = ?
-          AND "SERVICO" = ?
-          AND "PACOTES" = ?
-        """
-    else:
-        sql = f"""
-        UPDATE {table}
-        SET "STATUS" = ?
-        WHERE "TIMESTAMP" = ?
-          AND "NOME" = ?
-          AND "E-MAIL" = ?
-          AND "UTD" = ?
-          AND "BASE" = ?
-          AND "SERVICO" = ?
-          AND "PACOTES" = ?
-        """
-
-    params = [change.as_tuple() for change in changes]
-
-    conn = None
-    cur = None
     try:
         conn = create_connection(cfg, connector)
         cur = conn.cursor()
@@ -276,3 +135,112 @@ def update_statuses(
             conn.close()
 
     return len(params)
+
+
+def table_has_column(
+    column: str,
+    *,
+    connector: SupportsHanaConnect,
+    config: HanaConfig | None = None,
+) -> bool:
+    """Return ``True`` when *column* exists in the pedidos table."""
+
+    cfg = config or HanaConfig.from_env()
+    table = PEDIDOS_TABLE.fqn()
+    sql = f'SELECT * FROM {table} WHERE 1=0'
+
+    conn = None
+    cur = None
+    try:
+        conn = create_connection(cfg, connector)
+        cur = conn.cursor()
+        cur.execute(sql)
+        cols = [col[0].upper() for col in cur.description]
+    except Exception:
+        return False
+    finally:
+        if cur is not None:
+            cur.close()
+        if conn is not None:
+            conn.close()
+
+    return column.upper() in cols
+
+
+def insert_pedidos(
+    rows: pd.DataFrame,
+    *,
+    connector: SupportsHanaConnect,
+    config: HanaConfig | None = None,
+) -> int:
+    """Insert pedidos rows into the database."""
+
+    if rows.empty:
+        return 0
+
+    cfg = config or HanaConfig.from_env()
+    has_turma = table_has_column("TURMA", connector=connector, config=cfg)
+    table = PEDIDOS_TABLE.fqn()
+
+    if has_turma:
+        sql = f"""
+        INSERT INTO {table}
+        ("TIMESTAMP","NOME","E-MAIL","CADEIA","UTD","BASE","TURMA","ZONA","SERVICO","PACOTES","NOTAS","JUSTIFICATIVA","COMENTARIOS")
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+        """
+        param_rows = [
+            (
+                row["TIMESTAMP"],
+                row["NOME"],
+                row["E-MAIL"],
+                row["CADEIA"],
+                row["UTD"],
+                row["BASE"],
+                row.get("TURMA"),
+                row.get("ZONA"),
+                row.get("SERVICO_CLEAN"),
+                int(row.get("PACOTES", 0)),
+                None,
+                (str(row.get("JUSTIFICATIVA", "")).strip() or None) if pd.notna(row.get("JUSTIFICATIVA")) else None,
+                (str(row.get("COMENTARIO", "")).strip() or None) if pd.notna(row.get("COMENTARIO")) else None,
+            )
+            for _, row in rows.iterrows()
+        ]
+    else:
+        sql = f"""
+        INSERT INTO {table}
+        ("TIMESTAMP","NOME","E-MAIL","CADEIA","UTD","BASE","ZONA","SERVICO","PACOTES","NOTAS","JUSTIFICATIVA","COMENTARIOS")
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+        """
+        param_rows = [
+            (
+                row["TIMESTAMP"],
+                row["NOME"],
+                row["E-MAIL"],
+                row["CADEIA"],
+                row["UTD"],
+                row["BASE"],
+                row.get("ZONA"),
+                row.get("SERVICO_CLEAN"),
+                int(row.get("PACOTES", 0)),
+                None,
+                (str(row.get("JUSTIFICATIVA", "")).strip() or None) if pd.notna(row.get("JUSTIFICATIVA")) else None,
+                (str(row.get("COMENTARIO", "")).strip() or None) if pd.notna(row.get("COMENTARIO")) else None,
+            )
+            for _, row in rows.iterrows()
+        ]
+
+    conn = None
+    cur = None
+    try:
+        conn = create_connection(cfg, connector)
+        cur = conn.cursor()
+        cur.executemany(sql, param_rows)
+        conn.commit()
+    finally:
+        if cur is not None:
+            cur.close()
+        if conn is not None:
+            conn.close()
+
+    return len(param_rows)

@@ -1,14 +1,15 @@
+"""High level service for pedidos administration."""
 from __future__ import annotations
 
 from typing import Dict
+from typing import Dict
 
 import pandas as pd
-from hdbcli import dbapi
 
 from app.repositories.pedidos_repo import (
     build_status_changes,
     fetch_pedidos,
-    insert_pedidos as repo_insert_pedidos,
+    insert_pedidos,
     table_has_column,
     update_statuses,
 )
@@ -24,35 +25,6 @@ def fetch_pedidos_with_labels(
     df = df.copy()
     df["STATUS_LABEL"] = df["STATUS"].map(lambda v: STATUS_LABEL_MAP.get(str(v).upper().strip(), "🟡 Pendente"))
     return df
-
-
-def has_column(column: str, *, connector: SupportsHanaConnect, config: HanaConfig | None = None) -> bool:
-    return table_has_column(column, connector=connector, config=config)
-
-
-def has_status_column(*, connector: SupportsHanaConnect, config: HanaConfig | None = None) -> bool:
-    return has_column("STATUS", connector=connector, config=config)
-
-
-def insert_pedidos(
-    df: pd.DataFrame,
-    *,
-    connector: SupportsHanaConnect,
-    config: HanaConfig | None = None,
-) -> int:
-    include_turma = has_column("TURMA", connector=connector, config=config)
-    return repo_insert_pedidos(
-        df,
-        connector=connector,
-        config=config,
-        include_turma=include_turma,
-    )
-
-
-def insert_pedidos_default(df: pd.DataFrame) -> int:
-    cfg = HanaConfig.from_env()
-    return insert_pedidos(df, connector=dbapi.connect, config=cfg)
-
 
 def apply_status_changes(
     df: pd.DataFrame,
@@ -78,3 +50,27 @@ def apply_status_changes(
         config=config,
         has_validado_por=has_validado_por,
     )
+
+def pedidos_table_has_column(
+    column: str,
+    *,
+    connector: SupportsHanaConnect,
+    config: HanaConfig | None = None,
+) -> bool:
+    """Expose :func:`table_has_column` with a service level name."""
+
+    return table_has_column(column, connector=connector, config=config)
+
+
+def insert_pedidos_rows(
+    rows: pd.DataFrame,
+    *,
+    connector: SupportsHanaConnect,
+    config: HanaConfig | None = None,
+) -> int:
+    """Persist prepared pedidos rows into the database."""
+
+    if rows.empty:
+        return 0
+
+    return insert_pedidos(rows, connector=connector, config=config)
