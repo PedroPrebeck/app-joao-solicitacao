@@ -9,7 +9,7 @@ from hdbcli import dbapi
 
 from app.components.dialogs import show_submission_success
 from app.components.editors import request_lines_editor
-from app.components.forms import requester_identification, validate_requester
+from app.components.forms import render_sidebar, requester_identification, validate_requester
 from app.services.hana import HanaConfig
 from app.services.pedidos_service import insert_pedidos_rows
 from app.services.pedidos_submission import prepare_submission_dataframe
@@ -67,6 +67,8 @@ def _render_base_selection(
 
 
 def main() -> None:
+    render_sidebar(show_instructions=True)
+
     window = current_time_window()
     dag40_df = load_dag40_cached()
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import streamlit as st
 
-from app.components.forms import render_sidebar_instructions
+from app.components.forms import render_sidebar
 from app.state import session_keys as keys
 from app.utils.cache import load_dag40_cached
 from app.utils.time_windows import current_time_window
@@ -35,7 +35,7 @@ def main() -> None:
             icon="🕙",
         )
 
-    render_sidebar_instructions()
+    render_sidebar()
 
     # Prime the DAG40 cache so the pages load quickly when the user navigates.
     try:

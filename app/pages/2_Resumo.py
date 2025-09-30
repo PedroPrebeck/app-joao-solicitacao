@@ -6,6 +6,7 @@ from datetime import datetime
 import pandas as pd
 import streamlit as st
 
+from app.components.forms import render_sidebar
 from app.state import session_keys as keys
 from app.utils.cache import fetch_pedidos_cached
 from app.utils.time_windows import TZ
@@ -52,6 +53,8 @@ def _apply_filters(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def main() -> None:
+    render_sidebar(show_instructions=False)
+
     st.subheader("Resumo de Pedidos", divider=True)
 
     try:

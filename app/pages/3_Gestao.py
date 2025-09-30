@@ -8,6 +8,7 @@ import pandas as pd
 import streamlit as st
 from hdbcli import dbapi
 
+from app.components.forms import render_sidebar
 from app.exporters.csv_exporter import generate_csv_payloads
 from app.models.pedido import build_row_key_from_series
 from app.services.auth_service import authenticator_from_config, load_auth_config
@@ -373,6 +374,8 @@ def _render_csv_generation_tools(admin_df: pd.DataFrame) -> None:
 
 
 def main() -> None:
+    render_sidebar(show_instructions=False)
+
     st.subheader("Gestão de Pedidos", divider=True)
 
     try:
