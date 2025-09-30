@@ -1,8 +1,7 @@
 """High level service for pedidos administration."""
 from __future__ import annotations
 
-from __future__ import annotations
-
+from typing import Dict
 from typing import Dict
 
 import pandas as pd
