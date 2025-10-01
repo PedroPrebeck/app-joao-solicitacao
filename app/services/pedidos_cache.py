@@ -40,6 +40,10 @@ def fetch_all_pedidos_cached() -> pd.DataFrame:
     ]
     existing_cols = [c for c in desired_cols if c in df.columns]
     df = df[existing_cols]
+    existing_cols = [c for c in desired_cols if c in df.columns]
+    df = df[existing_cols]
+    if "TIMESTAMP" not in df.columns:
+        return df  # or: raise ValueError("TIMESTAMP column is required")
     return df.sort_values("TIMESTAMP", ascending=True)
 
 
