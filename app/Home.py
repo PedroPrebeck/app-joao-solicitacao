@@ -4,16 +4,9 @@ from __future__ import annotations
 import streamlit as st
 
 from app.components.forms import render_sidebar
-from app.state import session_keys as keys
+from app.state.session import handle_full_reset
 from app.utils.cache import load_dag40_cached
 from app.utils.time_windows import current_time_window
-
-
-def _handle_full_reset() -> None:
-    if st.session_state.get(keys.FULL_RESET_FLAG, False):
-        st.session_state.clear()
-        st.session_state[keys.FULL_RESET_FLAG] = False
-        st.rerun()
 
 
 def main() -> None:
@@ -23,7 +16,7 @@ def main() -> None:
         layout="wide",
     )
 
-    _handle_full_reset()
+    handle_full_reset()
 
     st.title("Geração de Notas de Cobrança - Painel de Solicitações")
     st.caption("Solicite a geração de notas por UTD, TURMA e BASE, com validações operacionais de horário.")
