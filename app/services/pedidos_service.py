@@ -26,7 +26,6 @@ def fetch_pedidos_with_labels(
     df["STATUS_LABEL"] = df["STATUS"].map(lambda v: STATUS_LABEL_MAP.get(str(v).upper().strip(), "🟡 Pendente"))
     return df
 
-
 def apply_status_changes(
     df: pd.DataFrame,
     pending_labels: Dict[str, str],
@@ -51,7 +50,6 @@ def apply_status_changes(
         config=config,
         has_validado_por=has_validado_por,
     )
-
 
 def pedidos_table_has_column(
     column: str,

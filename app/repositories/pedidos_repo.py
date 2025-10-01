@@ -79,7 +79,6 @@ def fetch_pedidos(
         df["STATUS"] = Status.EM_ANALISE
     return df
 
-
 def build_status_changes(
     df: pd.DataFrame,
     pending_labels: dict[str, str],
@@ -123,7 +122,6 @@ def build_status_changes(
         changes.append(StatusChange(validado_por=validado_por, **base_kwargs))
 
     return changes
-
 
     try:
         conn = create_connection(cfg, connector)

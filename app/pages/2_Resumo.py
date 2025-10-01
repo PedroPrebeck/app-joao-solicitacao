@@ -114,6 +114,7 @@ def main() -> None:
         "CADEIA",
         "JUSTIFICATIVA",
         "COMENTARIOS",
+        "STATUS_LABEL",
     ]
     pretty_names = {
         "DATA_HORA": "Data e hora",

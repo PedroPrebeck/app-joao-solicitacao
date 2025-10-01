@@ -31,7 +31,6 @@ ALLOWED_ADMINS = {
     "jsbrito@neoenergia.com",
 }
 
-
 class Status:
     """Enumeration for status values stored in the HANA database."""
 
